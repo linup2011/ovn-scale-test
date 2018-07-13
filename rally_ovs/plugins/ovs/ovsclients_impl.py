@@ -69,6 +69,9 @@ class OvnNbctl(OvsClient):
                     else:
                         cmd_prefix = ["sudo"]
 
+                if cmd == "exit":
+                    cmd_prefix.append("  ovs-appctl -t ")
+
                 cmd = itertools.chain(cmd_prefix, ["ovn-nbctl"], opts, [cmd], args)
                 self.cmds.append(" ".join(cmd))
 
@@ -254,6 +257,13 @@ class OvnNbctl(OvsClient):
                 # problem if this happens, but we need to catch the
                 # exception so that the test doesn't fail.
                 pass
+
+        def start_daemon(self):
+            opts = ["--detach",  "--pidfile", "--log-file"]
+            self.run("", opts=opts, raise_on_error=False)
+
+        def stop_daemon(self):
+            self.run("exit", raise_on_error=False)
 
     def create_client(self):
 
