@@ -32,7 +32,8 @@ def get_ovn_multihost_info(deploy_uuid, controller_name):
 
     deployments = db.deployment_list(parent_uuid=deploy_uuid)
 
-    multihost_info = {"controller" : {}, "farms" : {}, "install_method" : "sandbox"}
+    multihost_info = {"controller" : {}, "farms" : {},
+                      "install_method" : "sandbox"}
 
     for dep in deployments:
         cred = db.resource_get_all(dep["uuid"], type=ResourceType.CREDENTIAL)[0]
