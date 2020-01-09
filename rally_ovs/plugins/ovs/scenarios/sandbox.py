@@ -33,23 +33,25 @@ LOG = logging.getLogger(__name__)
 class SandboxScenario(scenario.OvsScenario):
 
 
-    def _add_controller_resource(self, deployment, controller_cidr):
+    def _add_controller_resource(self, deployment, host_container, controller_cidr):
         dep = objects.Deployment.get(deployment)
         resources = dep.get_resources(type=ResourceType.CONTROLLER)
         if resources == None:
             dep.add_resource(provider_name=deployment,
                             type=ResourceType.CONTROLLER,
                             info={"ip":controller_cidr.split('/')[0],
-                                  "deployment_name":deployment})
+                                  "deployment_name":deployment,
+                                  "host_container":host_container})
             return
 
         resources[0].update({"info": {"ip":controller_cidr.split('/')[0],
-                                        "deployment_name":deployment}})
+                                        "deployment_name":deployment,
+                                        "host_container":host_container}})
         resources[0].save()
 
 
 
-    def _create_controller(self, dep_name, controller_cidr, net_dev):
+    def _create_controller(self, dep_name, host_container, controller_cidr, net_dev):
 
         cmd = "./ovs-sandbox.sh --controller --ovn \
                             --controller-ip %s --device %s;" % \
@@ -57,7 +59,8 @@ class SandboxScenario(scenario.OvsScenario):
         ssh = self.controller_client()
         ssh.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
 
-        self._add_controller_resource(dep_name, controller_cidr)
+        self._add_controller_resource(dep_name, host_container,
+                                      controller_cidr)
 
 
 
@@ -76,7 +79,7 @@ class SandboxScenario(scenario.OvsScenario):
 
 
         for i in sandbox_set:
-            if sandboxes.has_key(i):
+            if i in sandboxes:
                 continue
             sandboxes[i] = info["sandboxes"][i]
 
@@ -97,7 +100,7 @@ class SandboxScenario(scenario.OvsScenario):
         info = res["info"]
         sandboxes = info["sandboxes"]
         for i in to_delete:
-            if info["sandboxes"].has_key(i):
+            if i in info["sandboxes"]:
                 del info["sandboxes"][i]
 
         info["sandboxes"] = sandboxes
@@ -154,7 +157,7 @@ class SandboxScenario(scenario.OvsScenario):
             i += batch_left
             host_ip_list = []
             while batch_left > 0:
-                host_ip_list.append(str(sandbox_hosts.next()))
+                host_ip_list.append(str(next(sandbox_hosts)))
                 batch_left -= 1
 
             cmds = []
@@ -168,13 +171,13 @@ class SandboxScenario(scenario.OvsScenario):
                 sandboxes["sandbox-%s" % host_ip] = tag
 
             if install_method == "docker":
-                print "Do not run ssh; sandbox installed by ansible-docker"
+                print("Do not run ssh; sandbox installed by ansible-docker")
             elif install_method == "physical":
-                print "Do not run ssh; sandbox installed on physical test bed"
+                print("Do not run ssh; sandbox installed on physical test bed")
             elif install_method == "sandbox":
                 self._do_create_sandbox(ssh, cmds)
             else:
-                print "Invalid install method for controller"
+                print("Invalid install method for controller")
                 exit(1)
 
             batch_left = min(batch, amount - i)
@@ -196,7 +199,7 @@ class SandboxScenario(scenario.OvsScenario):
         for i in sandboxes:
             farm_map[i["farm"]].append(i["name"])
 
-        for k,v in six.iteritems(farm_map):
+        for k,v in six.items(farm_map):
             ssh = self.farm_clients(k)
 
             cmds = []

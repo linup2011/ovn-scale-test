@@ -21,7 +21,6 @@ from rally_ovs.plugins.ovs import ovsclients
 
 LOG = logging.getLogger(__name__)
 
-
 @context.configure(name="ovn_nb", order=120)
 class OvnNorthboundContext(ovsclients.ClientsMixin, context.Context):
     CONFIG_SCHEMA = {
@@ -40,7 +39,8 @@ class OvnNorthboundContext(ovsclients.ClientsMixin, context.Context):
         super(OvnNorthboundContext, self).setup()
 
         ovn_nbctl = self.controller_client("ovn-nbctl")
-        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
+        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
+                              self.context['controller']['host_container'])
         lswitches = ovn_nbctl.show()
 
         self.context["ovn-nb"] = lswitches
