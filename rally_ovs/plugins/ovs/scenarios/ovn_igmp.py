@@ -204,6 +204,9 @@ class OvnIGMP(ovn_network.OvnNetwork):
                    cleanup=True,
                    igmp_args=None):
         sandboxes = self.context["sandboxes"]
+        if not sandboxes:
+            # when there is no sandbox specified, bind on all sandboxes.
+            sandboxes = utils.get_sandboxes(self.task["deployment_uuid"])
 
         lswitches = self._create_networks(network_create_args)
 

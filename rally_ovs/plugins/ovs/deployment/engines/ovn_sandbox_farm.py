@@ -115,8 +115,10 @@ class OvnSandboxFarmEngine(SandboxEngine):
     def cleanup(self):
         """Cleanup OVN deployment."""
 
+        install_method = self.config.get("install_method", "sandbox")
+
         for resource in self.deployment.get_resources():
-            if resource["type"] == ResourceType.CREDENTIAL:
+            if install_method != "physical" and resource["type"] == ResourceType.CREDENTIAL:
                 server = provider.Server.from_credentials(resource.info)
 
                 cmd = "[ -x ovs-sandbox.sh ] && ./ovs-sandbox.sh --cleanup-all"
