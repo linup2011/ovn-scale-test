@@ -146,7 +146,9 @@ class SandboxScenario(scenario.OvsScenario):
 
         sandbox_hosts = netaddr.iter_iprange(sandbox_cidr.ip, sandbox_cidr.last)
 
-        ssh = self.farm_clients(farm)
+        # TODO: ugly hack
+        if install_method != "physical"
+            ssh = self.farm_clients(farm)
 
 
         sandboxes = {}
