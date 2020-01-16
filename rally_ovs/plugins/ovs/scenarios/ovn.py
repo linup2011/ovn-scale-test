@@ -125,7 +125,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         flush_count = batch
         lports = []
         for i in range(lport_amount):
-            ip = str(ip_addrs.next()) if ip_addrs else ""
+            ip = str(next(ip_addrs)) if ip_addrs else ""
             if len(ip):
                 name = "lport_%s" % ip
             else:
