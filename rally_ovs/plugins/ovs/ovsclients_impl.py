@@ -44,7 +44,8 @@ class OvnNbctl(OvsClient):
         def enable_batch_mode(self, value=True):
             self.batch_mode = bool(value)
 
-        def set_sandbox(self, sandbox, install_method="sandbox", host_container=None):
+        def set_sandbox(self, sandbox, install_method="sandbox",
+                        host_container=None):
             self.sandbox = sandbox
             self.install_method = install_method
             self.host_container = host_container
@@ -91,9 +92,11 @@ class OvnNbctl(OvsClient):
                     run_cmds.append("sudo docker exec ovn-north-database ovn-nbctl " + " ".join(self.cmds))
                 elif self.install_method == "physical":
                     if self.host_container:
-                        run_cmds.append("sudo docker exec " + self.host_container + " ovn-nbctl" + " ".join(self.cmds))
+                        cmd_prefix = "sudo docker exec " + self.host_container + " ovn-nbctl"
                     else:
-                        run_cmds.append("sudo ovn-nbctl" + " ".join(self.cmds))
+                        cmd_prefix = "sudo ovn-nbctl"
+
+                    run_cmds.append(cmd_prefix + " ".join(self.cmds))
 
             self.ssh.run("\n".join(run_cmds),
                          stdout=sys.stdout, stderr=sys.stderr)
@@ -253,7 +256,8 @@ class OvnSbctl(OvsClient):
         def enable_batch_mode(self, value=True):
             self.batch_mode = bool(value)
 
-        def set_sandbox(self, sandbox, install_method="sandbox", host_container=None):
+        def set_sandbox(self, sandbox, install_method="sandbox",
+                        host_container=None):
             self.sandbox = sandbox
             self.install_method = install_method
             self.host_container = host_container
@@ -361,7 +365,8 @@ class OvsSsh(OvsClient):
         def enable_batch_mode(self, value=True):
             self.batch_mode = bool(value)
 
-        def set_sandbox(self, sandbox, install_method="sandbox", host_container=None):
+        def set_sandbox(self, sandbox, install_method="sandbox",
+                        host_container=None):
             self.sandbox = sandbox
             self.install_method = install_method
             self.host_container = host_container
@@ -412,7 +417,8 @@ class OvsVsctl(OvsClient):
         def enable_batch_mode(self, value=True):
             self.batch_mode = bool(value)
 
-        def set_sandbox(self, sandbox, install_method="sandbox", host_container=None):
+        def set_sandbox(self, sandbox, install_method="sandbox",
+                        host_container=None):
             self.sandbox = sandbox
             self.install_method = install_method
             self.host_container = host_container
@@ -435,9 +441,10 @@ class OvsVsctl(OvsClient):
 
             if self.install_method != "docker":
                 if self.host_container:
-                    cmd = itertools.chain(["sudo docker exec " + self.host_container + " ovs-vsctl"], opts, [cmd], args, extras)
+                    cmd_prefix = ["sudo docker exec " + self.host_container + " ovs-vsctl"]
                 else:
-                    cmd = itertools.chain(["ovs-vsctl"], opts, [cmd], args, extras)
+                    cmd_prefix = ["ovs-vsctl"]
+                cmd = itertools.chain(cmd_prefix, opts, [cmd], args, extras)
                 self.cmds.append(" ".join(cmd))
 
             if self.batch_mode:
@@ -492,7 +499,8 @@ class OvsOfctl(OvsClient):
             self.context = {}
             self.sandbox = None
 
-        def set_sandbox(self, sandbox, install_method="sandbox", host_container=None):
+        def set_sandbox(self, sandbox, install_method="sandbox",
+                        host_container=None):
             self.sandbox = sandbox
             self.install_method = install_method
             self.host_container = host_container
@@ -505,13 +513,11 @@ class OvsOfctl(OvsClient):
                 if self.install_method == "sandbox":
                     cmds.append(". %s/sandbox.rc" % self.sandbox)
 
-            if self.install_method == "physical":
-                if self.host_container:
-                    cmd = itertools.chain(["sudo docker exec " + self.host_container + " ovs-ofctl"], opts, [cmd], args)
-                else:
-                    cmd = itertools.chain(["ovs-ofctl"], opts, [cmd], args)
+            if self.install_method == "physical" and self.host_container:
+                cmd_prefix = ["sudo docker exec " + self.host_container + " ovs-ofctl"]
             else:
-                cmd = itertools.chain(["ovs-ofctl"], opts, [cmd], args)
+                cmd_prefix = ["ovs-ofctl"]
+            cmd = itertools.chain(cmd_prefix, opts, [cmd], args)
             cmds.append(" ".join(cmd))
             self.ssh.run("\n".join(cmds),
                          stdout=stdout, stderr=stderr)
