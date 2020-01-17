@@ -21,6 +21,7 @@ from rally_ovs.plugins.ovs import ovsclients
 
 LOG = logging.getLogger(__name__)
 
+
 @context.configure(name="ovn_nb", order=120)
 class OvnNorthboundContext(ovsclients.ClientsMixin, context.Context):
     CONFIG_SCHEMA = {

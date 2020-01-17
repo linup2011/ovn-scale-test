@@ -135,11 +135,12 @@ def get_sandboxes(deploy_uuid, farm="", tag=""):
         if farm and farm != info["farm"]:
             continue
 
-        for k,v in six.items(info["sandboxes"]):
+        for k,v in six.iteritems(info["sandboxes"]):
             if tag and tag != v:
                 continue
 
-            sandbox = {"name": k, "tag": v, "farm": info["farm"], "host_container": info["host_container"]}
+            sandbox = {"name": k, "tag": v, "farm": info["farm"],
+                       "host_container": info["host_container"]}
             sandboxes.append(sandbox)
 
 
