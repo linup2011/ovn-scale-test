@@ -59,7 +59,7 @@ class OvnNorthbound(ovn.OvnScenario):
             network_cidr = lswitch.get("cidr", None)
             if network_cidr:
                 ip_list = netaddr.IPNetwork(network_cidr.ip + ip_start_index).iter_hosts()
-                ipaddr = str(ip_list.next())
+                ipaddr = str(next(ip_list))
             else:
                 ipaddr = ""
             self.create_or_update_address_set("addrset%d" % addr_set_index,
