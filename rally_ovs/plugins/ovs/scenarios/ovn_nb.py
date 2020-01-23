@@ -141,6 +141,8 @@ class OvnNorthbound(ovn.OvnScenario):
         lswitches = self.context.get("ovn-nb", [])
         self._delete_lswitch(lswitches)
         self._delete_routers()
+        for address_set in self._list_address_set():
+            self._remove_address_set(address_set)
 
     @scenario.configure(context={})
     def create_and_list_lswitches(self, lswitch_create_args=None):
