@@ -137,6 +137,12 @@ class OvnNorthbound(ovn.OvnScenario):
             self._delete_lport([lport])
 
     @scenario.configure(context={})
+    def cleanup_routed_lswitches(self):
+        lswitches = self.context.get("ovn-nb", [])
+        self._delete_lswitch(lswitches)
+        self._delete_routers()
+
+    @scenario.configure(context={})
     def create_and_list_lswitches(self, lswitch_create_args=None):
         self._create_lswitches(lswitch_create_args)
         self._list_lswitches()
