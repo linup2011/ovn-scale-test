@@ -31,6 +31,9 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
     def __init__(self, context=None):
         super(OvnScenario, self).__init__(context)
         self._init_conns(self.context)
+
+    def __del__(self):
+        self._close_conns()
     
     def _init_conns(self, context):
         self._ssh_conns = {}
@@ -55,6 +58,10 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
             for cmd in cmds:
                 ovs_ssh.run(cmd)
             ovs_ssh.flush()
+
+    def _close_conns(self):
+        for _, ovs_ssh in self._ssh_conns.items():
+            ovs_ssh.close()
 
     '''
     return: [{"name": "lswitch_xxxx_xxxxx", "cidr": netaddr.IPNetwork}, ...]

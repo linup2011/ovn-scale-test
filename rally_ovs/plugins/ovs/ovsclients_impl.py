@@ -405,6 +405,17 @@ class OvsSsh(OvsClient):
 
             self.cmds = None
 
+        def close(self):
+            try:
+                self.ssh.close()
+            except AttributeError:
+                # Rally's ssh _client attribute can be either
+                # an ssh session or False (boolean). Attempting to close
+                # a boolean results in an AttributeError. It's not a
+                # problem if this happens, but we need to catch the
+                # exception so that the test doesn't fail.
+                pass
+
     def create_client(self):
         print("*********   call OvsSsh.create_client")
         client = self._OvsSsh(self.credential)
