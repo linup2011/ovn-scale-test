@@ -359,10 +359,28 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         # on or at cleanup
         self.context["ovs-internal-ports"][port_name] = (lport, sandbox)
 
-    def _delete_ovs_internal_vm(self, lport, ovs_ssh, ovs_vsctl):
-        port_name = lport["name"]
+    def _delete_ovs_internal_vm(self, port_name, ovs_ssh, ovs_vsctl):
         ovs_vsctl.del_port(port_name)
         ovs_ssh.run('ip netns del {p}'.format(p=port_name))
+
+    def _flush_ovs_internal_ports(self, sandbox):
+        stdout = StringIO()
+        host_container = sandbox["host_container"]
+        sb_name = sandbox["name"]
+        farm = sandbox["farm"]
+
+        ovs_vsctl = self.farm_clients(farm, "ovs-vsctl")
+        ovs_vsctl.set_sandbox(sandbox, self.install_method, host_container)
+        ovs_vsctl.run("find interface type=internal", ["--bare", "--columns", "name"], stdout=stdout)
+        output = stdout.getvalue()
+
+        ovs_ssh = self.farm_clients(farm, "ovs-ssh")
+        ovs_ssh.set_sandbox(sb_name, self.install_method, host_container)
+
+        for name in list(filter(None, output.splitlines())):
+            if "lport" not in name:
+                continue
+            self._delete_ovs_internal_vm(name, ovs_ssh, ovs_vsctl)
 
     def _cleanup_ovs_internal_ports(self, sandboxes):
         conns = {}
@@ -383,7 +401,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         for _, (lport, sandbox) in self.context["ovs-internal-ports"].items():
             sb_name = sandbox["name"]
             (ovs_ssh, ovs_vsctl) = conns[sb_name]
-            self._delete_ovs_internal_vm(lport, ovs_ssh, ovs_vsctl)
+            self._delete_ovs_internal_vm(lport["name"], ovs_ssh, ovs_vsctl)
 
         for _, (ovs_ssh, ovs_vsctl) in conns.items():
             ovs_vsctl.flush()

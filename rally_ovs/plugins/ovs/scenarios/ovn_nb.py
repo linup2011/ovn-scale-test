@@ -138,6 +138,9 @@ class OvnNorthbound(ovn.OvnScenario):
 
     @scenario.configure(context={})
     def cleanup_routed_lswitches(self):
+        sandboxes = self.context.get("sandboxes", [])
+        for sandbox in sandboxes:
+            self._flush_ovs_internal_ports(sandbox)
         lswitches = self.context.get("ovn-nb", [])
         self._delete_lswitch(lswitches)
         self._delete_routers()
