@@ -87,6 +87,26 @@ class OvnNorthbound(ovn.OvnScenario):
                                       addr_set_index, (iteration % 2) == 0,
                                       create_acls)
 
+    @scenario.configure()
+    def create_routed_network(self, lswitch_create_args = None,
+                              networks_per_router = None,
+                              lport_create_args = None,
+                              port_bind_args = None):
+        lrouters = self.context["datapaths"]["routers"]
+        sandboxes = self.context["sandboxes"]
+
+        lswitches = []
+        if lswitch_create_args["amount"]:
+            lswitches = self._create_lswitches(lswitch_create_args)
+
+        if networks_per_router:
+            self._connect_networks_to_routers(lswitches, lrouters,
+                                              networks_per_router)
+
+        for lswitch in lswitches:
+            lport = self._create_lports(lswitch, lport_create_args)
+            self._bind_ports(lport, sandboxes, port_bind_args)
+
     @atomic.action_timer("ovn.delete_port_acls")
     def delete_port_acls(self, lswitch, lport, addr_set_index):
         match = "'outport == %s && ip4.src == $addrset%d'" % (lport["name"], addr_set_index)
