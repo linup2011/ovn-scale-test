@@ -375,6 +375,18 @@ class OvnSbctl(OvsClient):
             self.run("sync", opts)
             self.batch_mode = batch_mode
 
+        def chassis_bound(self, chassis_name):
+            batch_mode = self.batch_mode
+            if batch_mode:
+                self.flush()
+                self.batch_mode = False
+            stdout = StringIO()
+            self.run("find chassis", ["--bare", "--columns _uuid"],
+                     ["name={}".format(chassis_name)],
+                     stdout=stdout)
+            self.batch_mode = batch_mode
+            return len(stdout.getvalue().splitlines()) == 1
+
         def close(self):
             try:
                 self.ssh.close()
@@ -385,7 +397,6 @@ class OvnSbctl(OvsClient):
                 # problem if this happens, but we need to catch the
                 # exception so that the test doesn't fail.
                 pass
-
 
     def create_client(self):
 
