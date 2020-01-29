@@ -24,7 +24,6 @@ class SshClient(OvsClient):
 
 
     def create_client(self):
-        print("*********   call OvnNbctl.create_client")
         return get_ssh_from_credential(self.credential)
 
 
@@ -259,7 +258,6 @@ class OvnNbctl(OvsClient):
                 pass
 
     def create_client(self):
-        print("*********   call OvnNbctl.create_client")
 
         client = self._OvnNbctl(self.credential)
 
@@ -385,7 +383,6 @@ class OvnSbctl(OvsClient):
 
 
     def create_client(self):
-        print("*********   call OvnSbctl.create_client")
 
         client = self._OvnSbctl(self.credential)
 
@@ -449,7 +446,6 @@ class OvsSsh(OvsClient):
                 pass
 
     def create_client(self):
-        print("*********   call OvsSsh.create_client")
         client = self._OvsSsh(self.credential)
         return client
 
@@ -548,7 +544,6 @@ class OvsVsctl(OvsClient):
                 pass
 
     def create_client(self):
-        print("*********   call OvsVsctl.create_client")
         client = self._OvsVsctl(self.credential)
         return client
 
@@ -610,6 +605,5 @@ class OvsOfctl(OvsClient):
                 pass
 
     def create_client(self):
-        print("*********   call OvsOfctl.create_client")
         client = self._OvsOfctl(self.credential)
         return client
