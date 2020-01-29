@@ -75,12 +75,13 @@ class OvnNorthbound(ovn.OvnScenario):
     def create_routed_lport(self, lport_create_args = None,
                             port_bind_args = None,
                             create_acls = True):
-        lswitches = self.context["datapaths"]["lswitches"]
+        lswitches = self.context["ovn-nb"]
+        ip_offset = lport_create_args.get("ip_offset", 1) if lport_create_args else 1
 
         iteration = self.context["iteration"]
         lswitch = lswitches[iteration % len(lswitches)]
         addr_set_index = iteration / 2
-        ip_start_index = iteration / len(lswitches) + 1
+        ip_start_index = iteration / len(lswitches) + ip_offset
 
         self.create_lport_acl_addrset(lswitch, lport_create_args,
                                       port_bind_args, ip_start_index,
@@ -91,7 +92,8 @@ class OvnNorthbound(ovn.OvnScenario):
     def create_routed_network(self, lswitch_create_args = None,
                               networks_per_router = None,
                               lport_create_args = None,
-                              port_bind_args = None):
+                              port_bind_args = None,
+                              create_mgmt_port = True):
         lrouters = self.context["datapaths"]["routers"]
         sandboxes = self.context["sandboxes"]
 
@@ -102,6 +104,9 @@ class OvnNorthbound(ovn.OvnScenario):
         if networks_per_router:
             self._connect_networks_to_routers(lswitches, lrouters,
                                               networks_per_router)
+
+        if create_mgmt_port == False:
+            return
 
         for lswitch in lswitches:
             lport = self._create_lports(lswitch, lport_create_args)

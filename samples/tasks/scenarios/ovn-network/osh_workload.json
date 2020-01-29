@@ -60,7 +60,45 @@
         },
         {% endfor %}
         {
-            "title": "Create switch-per-node scenario",
+            "title": "Create switch-per-node scenario (setup workload)",
+            "run_in_parallel": true,
+            "workloads": [
+                {
+                    "name": "OvnNorthbound.create_routed_network",
+                    "args": {
+                        "lswitch_create_args": {
+                            "amount" : {{networks}},
+                            "start_cidr": "1.0.0.0/8"
+                        },
+                        "lport_create_args": {
+                            "batch" : 1,
+                            "port_security" : true
+                        },
+                        "port_bind_args": {
+                            "internal" : true
+                        },
+                        "networks_per_router": {{networks}}
+                    },
+                    "runner": {
+                        "type": "serial",
+                        "times": 1
+                    },
+                    "context": {
+                        "ovn_multihost" : {
+                            "controller": "ovn-controller-node"
+                        },
+                        "sandbox": {"tag": "ToR1"},
+                        "datapath": {
+                            "router_create_args": {
+                                "amount": 1
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "title": "Create switch-per-node scenario (add pods workload)",
             "run_in_parallel": true,
             "workloads": [
                 {
@@ -68,7 +106,8 @@
                     "args": {
                         "lport_create_args": {
                             "batch" : 1,
-                            "port_security" : true
+                            "port_security" : true,
+                            "ip_offset" : 2
                         },
                         "port_bind_args": {
                             "internal" : true
@@ -80,20 +119,10 @@
                         "times": {{ports_per_network}}
                     },
                     "context": {
-                        "ovn_multihost" : {
-                            "controller": "ovn-controller-node"
-                        },
-                        "sandbox": {"tag": "ToR1"},
-                        "datapath": {
-                            "router_create_args": {
-                                "amount": 1
-                            },
-                            "lswitch_create_args": {
-                                "amount": {{networks}},
-                                "start_cidr": "1.0.0.0/8"
-                            },
-                            "networks_per_router":  {{networks}}
-                        }
+                       "sandbox": {"tag": "ToR1"},
+                       "ovn_multihost" : {
+                            "controller": "ovn-controller-node"},
+                       "ovn_nb": {}
                     }
                 }
             ]
