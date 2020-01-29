@@ -40,6 +40,9 @@ class OvnNbctl(OvsClient):
             self.batch_mode = False
             self.cmds = None
 
+        def __del__(self):
+            self.close()
+
         def enable_batch_mode(self, value=True):
             self.batch_mode = bool(value)
 
@@ -244,6 +247,17 @@ class OvnNbctl(OvsClient):
             self.run("sync", opts)
             self.batch_mode = batch_mode
 
+        def close(self):
+            try:
+                self.ssh.close()
+            except AttributeError:
+                # Rally's ssh _client attribute can be either
+                # an ssh session or False (boolean). Attempting to close
+                # a boolean results in an AttributeError. It's not a
+                # problem if this happens, but we need to catch the
+                # exception so that the test doesn't fail.
+                pass
+
     def create_client(self):
         print("*********   call OvnNbctl.create_client")
 
@@ -261,6 +275,9 @@ class OvnSbctl(OvsClient):
             self.sandbox = None
             self.batch_mode = False
             self.cmds = None
+
+        def __del__(self):
+            self.close()
 
         def enable_batch_mode(self, value=True):
             self.batch_mode = bool(value)
@@ -355,6 +372,18 @@ class OvnSbctl(OvsClient):
             self.run("sync", opts)
             self.batch_mode = batch_mode
 
+        def close(self):
+            try:
+                self.ssh.close()
+            except AttributeError:
+                # Rally's ssh _client attribute can be either
+                # an ssh session or False (boolean). Attempting to close
+                # a boolean results in an AttributeError. It's not a
+                # problem if this happens, but we need to catch the
+                # exception so that the test doesn't fail.
+                pass
+
+
     def create_client(self):
         print("*********   call OvnSbctl.create_client")
 
@@ -370,6 +399,9 @@ class OvsSsh(OvsClient):
             self.ssh = get_ssh_from_credential(credential)
             self.batch_mode = False
             self.cmds = None
+
+        def __del__(self):
+            self.close()
 
         def enable_batch_mode(self, value=True):
             self.batch_mode = bool(value)
@@ -433,6 +465,9 @@ class OvsVsctl(OvsClient):
             self.batch_mode = False
             self.sandbox = None
             self.cmds = None
+
+        def __del__(self):
+            self.close()
 
         def enable_batch_mode(self, value=True):
             self.batch_mode = bool(value)
@@ -501,6 +536,17 @@ class OvsVsctl(OvsClient):
             args += set_colval_args(*col_values)
             self.run("set", args=args)
 
+        def close(self):
+            try:
+                self.ssh.close()
+            except AttributeError:
+                # Rally's ssh _client attribute can be either
+                # an ssh session or False (boolean). Attempting to close
+                # a boolean results in an AttributeError. It's not a
+                # problem if this happens, but we need to catch the
+                # exception so that the test doesn't fail.
+                pass
+
     def create_client(self):
         print("*********   call OvsVsctl.create_client")
         client = self._OvsVsctl(self.credential)
@@ -517,6 +563,9 @@ class OvsOfctl(OvsClient):
             self.ssh = get_ssh_from_credential(credential)
             self.context = {}
             self.sandbox = None
+
+        def __del__(self):
+            self.close()
 
         def set_sandbox(self, sandbox, install_method="sandbox",
                         host_container=None):
@@ -548,6 +597,17 @@ class OvsOfctl(OvsClient):
             oflow_data = stdout.getvalue().strip()
             oflow_data = oflow_data.split('\n')
             return len(oflow_data)
+
+        def close(self):
+            try:
+                self.ssh.close()
+            except AttributeError:
+                # Rally's ssh _client attribute can be either
+                # an ssh session or False (boolean). Attempting to close
+                # a boolean results in an AttributeError. It's not a
+                # problem if this happens, but we need to catch the
+                # exception so that the test doesn't fail.
+                pass
 
     def create_client(self):
         print("*********   call OvsOfctl.create_client")
