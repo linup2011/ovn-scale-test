@@ -47,7 +47,7 @@
                         "farm": "ovn-farm-node-{{i}}",
                         "amount": 1,
                         "batch" : 1,
-                        "start_cidr": "192.168.42.{{i + 10}}/24",
+                        "start_cidr": "5.0.{{i // 255 }}.{{i % 255}}/8",
                         "net_dev": "eth1",
                         "tag": "ToR1"
                     }
