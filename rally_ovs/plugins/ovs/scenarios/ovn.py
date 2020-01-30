@@ -41,14 +41,53 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         if not context:
             return
 
-        for sandbox in context["sandboxes"]:
-            sb_name = sandbox["name"]
-            farm = sandbox["farm"]
-            ovs_ssh = self.farm_clients(farm, "ovs-ssh")
-            ovs_ssh.set_sandbox(sb_name, self.install_method,
-                                sandbox["host_container"])
-            ovs_ssh.enable_batch_mode()
-            self._ssh_conns[sb_name] = ovs_ssh
+        # XXX Commenting this block out is a band-aid fix and
+        # should not be upstreamed.
+        #
+        # The purpose of this block appears to be to pre-create
+        # an ovs-ssh client for each farm node in the scenario.
+        # Then, when a connection is required, _get_conn() can be
+        # called to use one of the connections. There are a few
+        # problems here:
+        # 1) Each flavor of ovs/ovn command has its own distinct
+        #    client object type. So pre-creating "ovs-ssh" clients doesn't
+        #    help in the case where "ovn-nbctl" or "ovs-vsctl" clients
+        #    are needed, for instance.
+        # 2) There is no good way to ensure these connections get
+        #    closed when the OvnScenario completes. Python's __del__
+        #    method on an object is called when the garbage collector
+        #    is called, and that may not happen when you expected it to.
+        #    Therefore, the OvnScenario needs to have its connections
+        #    closed explicitly by the creator of the object. That means
+        #    we would need to modify rally.
+        # 3) Rally creates a new OvnScenario for each iteration of the
+        #    test. Therefore, pre-creating the ovs-ssh clients doesn't
+        #    help much here, since they just get re-pre-created on each
+        #    iteration.
+        #
+        # For now, this block is being commented out since only the IGMP
+        # scenario makes use of these SSH connections. Others create
+        # clients (and therefeore SSH sessions) on the fly and close
+        # those clients' connections when complete.
+        #
+        # Ideally, SSH connections would be pre-created and re-used for
+        # each instance of OvnScenario. Then client instances, when
+        # created, would reference one of the pre-created SSH connections.
+        # When the entire test run is complete, the SSH connections would
+        # be closed. This would mean that the total number of SSH connections
+        # used would be equal to the number of sandboxes in the test. This
+        # would at least work for the case where the scenarios are run
+        # serially. For parallel runs of the scenarios, I'm not sure if
+        # the SSH connections can be shared safely between threads/processes.
+
+        #for sandbox in context["sandboxes"]:
+        #    sb_name = sandbox["name"]
+        #    farm = sandbox["farm"]
+        #    ovs_ssh = self.farm_clients(farm, "ovs-ssh")
+        #    ovs_ssh.set_sandbox(sb_name, self.install_method,
+        #                        sandbox["host_container"])
+        #    ovs_ssh.enable_batch_mode()
+        #    self._ssh_conns[sb_name] = ovs_ssh
 
     def _get_conn(self, sb_name):
         return self._ssh_conns[sb_name]
@@ -382,6 +421,9 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                 continue
             self._delete_ovs_internal_vm(name, ovs_ssh, ovs_vsctl)
 
+        ovs_vsctl.close()
+        ovs_ssh.close()
+
     def _cleanup_ovs_internal_ports(self, sandboxes):
         conns = {}
         for sandbox in sandboxes:
@@ -406,6 +448,8 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         for _, (ovs_ssh, ovs_vsctl) in conns.items():
             ovs_vsctl.flush()
             ovs_ssh.flush()
+            ovs_vsctl.close()
+            ovs_ssh.close()
 
     @atomic.action_timer("ovn_network.bind_port")
     def _bind_ports(self, lports, sandboxes, port_bind_args):
@@ -435,12 +479,14 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                                                    "iface-status": "active"}),
                                  ('admin_state', 'up'))
                 ovs_vsctl.flush()
+                ovs_vsctl.close()
 
                 # If it's an internal port create a "fake vm"
                 if internal:
                     ovs_ssh = self.farm_clients(farm, "ovs-ssh")
                     self._bind_ovs_internal_vm(lport, sandbox_data, ovs_ssh)
                     ovs_ssh.flush()
+                    ovs_ssh.close()
 
         else:
             j = 0
@@ -466,6 +512,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                     if index % 400 == 0:
                         ovs_vsctl.flush()
                 ovs_vsctl.flush()
+                ovs_vsctl.close()
 
                 # If it's an internal port create a "fake vm"
                 if internal:
@@ -477,6 +524,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                         if index % 200 == 0:
                             ovs_ssh.flush()
                     ovs_ssh.flush()
+                    ovs_ssh.close()
                 j += 1
 
     @atomic.action_timer("ovn_network.wait_port_up")
@@ -511,6 +559,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
 
             LOG.debug('openflow count on %s is %s' % (sandbox_name, lflow_count))
             oflow_data.append([sandbox_name, lflow_count])
+            ovs_ofctl.close()
 
         # Leverage additive plot as each sandbox has just one openflow count.
         additive_oflow_data = {
@@ -531,6 +580,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                               self.context['controller']['host_container'])
         ovn_nbctl.create("Address_Set", name, ('addresses', addr_list))
         ovn_nbctl.flush()
+        ovn_nbctl.close()
 
     def _address_set_add_addrs(self, set_name, address_list):
         LOG.info("add [%s] to address_set %s" % (address_list, set_name))
@@ -543,6 +593,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                               self.context['controller']['host_container'])
         ovn_nbctl.add("Address_Set", name, ('addresses', ' ', addr_list))
         ovn_nbctl.flush()
+        ovn_nbctl.close()
 
     def _address_set_remove_addrs(self, set_name, address_list):
         LOG.info("remove [%s] from address_set %s" % (address_list, set_name))
@@ -555,6 +606,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                               self.context['controller']['host_container'])
         ovn_nbctl.remove("Address_Set", name, ('addresses', ' ', addr_list))
         ovn_nbctl.flush()
+        ovn_nbctl.close()
 
     def _list_address_set(self):
         stdout = StringIO()
@@ -563,6 +615,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                               self.context['controller']['host_container'])
         ovn_nbctl.run("list address_set", ["--bare", "--columns", "name"], stdout=stdout)
         ovn_nbctl.flush()
+        ovn_nbctl.close()
         output = stdout.getvalue()
         return output.splitlines()
 
@@ -574,6 +627,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                               self.context['controller']['host_container'])
         ovn_nbctl.destroy("Address_Set", set_name)
         ovn_nbctl.flush()
+        ovn_nbctl.close()
 
     def _get_address_set(self, set_name):
         LOG.info("get %s address_set" % set_name)
@@ -582,4 +636,6 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
                               self.context['controller']['host_container'])
         ovn_nbctl.enable_batch_mode(False)
-        return ovn_nbctl.get("Address_Set", set_name, 'addresses')
+        retval = ovn_nbctl.get("Address_Set", set_name, 'addresses')
+        ovn_nbctl.close()
+        return retval
