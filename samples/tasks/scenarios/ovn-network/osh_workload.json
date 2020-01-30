@@ -92,6 +92,9 @@
                             "router_create_args": {
                                 "amount": 1
                             }
+                        },
+                        "ovn-nbctld" : {
+                            "daemon_mode": True
                         }
                     }
                 }
@@ -121,8 +124,12 @@
                     "context": {
                        "sandbox": {"tag": "ToR1"},
                        "ovn_multihost" : {
-                            "controller": "ovn-controller-node"},
-                       "ovn_nb": {}
+                            "controller": "ovn-controller-node"
+                       },
+                       "ovn_nb": {},
+                       "ovn-nbctld" : {
+                            "daemon_mode": True
+                       }
                     }
                 }
             ]
