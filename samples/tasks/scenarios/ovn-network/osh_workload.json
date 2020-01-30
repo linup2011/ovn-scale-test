@@ -68,7 +68,7 @@
                     "args": {
                         "lswitch_create_args": {
                             "amount" : {{networks}},
-                            "start_cidr": "1.0.0.0/8"
+                            "start_cidr": "1.0.0.0/16"
                         },
                         "lport_create_args": {
                             "batch" : 1,
