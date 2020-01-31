@@ -484,6 +484,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                 # If it's an internal port create a "fake vm"
                 if internal:
                     ovs_ssh = self.farm_clients(farm, "ovs-ssh")
+                    ovs_ssh.set_sandbox(sandbox, self.install_method, sandbox_data['host_container'])
                     self._bind_ovs_internal_vm(lport, sandbox_data, ovs_ssh)
                     ovs_ssh.flush()
                     ovs_ssh.close()
@@ -517,6 +518,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                 # If it's an internal port create a "fake vm"
                 if internal:
                     ovs_ssh = self.farm_clients(farm, "ovs-ssh")
+                    ovs_ssh.set_sandbox(sandbox, self.install_method, sandboxes[j]["host_container"])
                     ovs_ssh.enable_batch_mode()
 
                     for index, lport in enumerate(lport_slice):
