@@ -69,7 +69,8 @@
                         },
                         "port_bind_args": {
                             "internal" : true,
-                            "wait_up" : true
+                            "wait_up" : true,
+                            "batch" : false
                         },
                         "networks_per_router": {{networks}}
                     },
@@ -108,7 +109,8 @@
                         },
                         "port_bind_args": {
                             "internal" : true,
-                            "wait_up" : true
+                            "wait_up" : true,
+                            "batch" : false
                         },
                         "create_acls": true
                     },
