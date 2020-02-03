@@ -113,7 +113,7 @@ class OvnNorthbound(ovn.OvnScenario):
             sb_idx = idx % len(sandboxes)
             sandbox = sandboxes[sb_idx]
             lport = self._create_lports(lswitch, lport_create_args)
-            self._bind_ports(lport, [sandbox], port_bind_args)
+            self._bind_ports_and_wait(lport, [sandbox], port_bind_args)
 
     @atomic.action_timer("ovn.delete_port_acls")
     def delete_port_acls(self, lswitch, lport, addr_set_index):
