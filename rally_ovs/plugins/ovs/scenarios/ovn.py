@@ -30,66 +30,31 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
 
     def __init__(self, context=None):
         super(OvnScenario, self).__init__(context)
-        self._init_conns(self.context)
+        self._ssh_conns = None
 
     def __del__(self):
         self._close_conns()
-    
-    def _init_conns(self, context):
-        self._ssh_conns = {}
+
+    def _build_conn_hash(self, context):
+        if not self._ssh_conns is None:
+            return
 
         if not context:
             return
 
-        # XXX Commenting this block out is a band-aid fix and
-        # should not be upstreamed.
-        #
-        # The purpose of this block appears to be to pre-create
-        # an ovs-ssh client for each farm node in the scenario.
-        # Then, when a connection is required, _get_conn() can be
-        # called to use one of the connections. There are a few
-        # problems here:
-        # 1) Each flavor of ovs/ovn command has its own distinct
-        #    client object type. So pre-creating "ovs-ssh" clients doesn't
-        #    help in the case where "ovn-nbctl" or "ovs-vsctl" clients
-        #    are needed, for instance.
-        # 2) There is no good way to ensure these connections get
-        #    closed when the OvnScenario completes. Python's __del__
-        #    method on an object is called when the garbage collector
-        #    is called, and that may not happen when you expected it to.
-        #    Therefore, the OvnScenario needs to have its connections
-        #    closed explicitly by the creator of the object. That means
-        #    we would need to modify rally.
-        # 3) Rally creates a new OvnScenario for each iteration of the
-        #    test. Therefore, pre-creating the ovs-ssh clients doesn't
-        #    help much here, since they just get re-pre-created on each
-        #    iteration.
-        #
-        # For now, this block is being commented out since only the IGMP
-        # scenario makes use of these SSH connections. Others create
-        # clients (and therefeore SSH sessions) on the fly and close
-        # those clients' connections when complete.
-        #
-        # Ideally, SSH connections would be pre-created and re-used for
-        # each instance of OvnScenario. Then client instances, when
-        # created, would reference one of the pre-created SSH connections.
-        # When the entire test run is complete, the SSH connections would
-        # be closed. This would mean that the total number of SSH connections
-        # used would be equal to the number of sandboxes in the test. This
-        # would at least work for the case where the scenarios are run
-        # serially. For parallel runs of the scenarios, I'm not sure if
-        # the SSH connections can be shared safely between threads/processes.
+        self._ssh_conns = {}
 
-        #for sandbox in context["sandboxes"]:
-        #    sb_name = sandbox["name"]
-        #    farm = sandbox["farm"]
-        #    ovs_ssh = self.farm_clients(farm, "ovs-ssh")
-        #    ovs_ssh.set_sandbox(sb_name, self.install_method,
-        #                        sandbox["host_container"])
-        #    ovs_ssh.enable_batch_mode()
-        #    self._ssh_conns[sb_name] = ovs_ssh
+        for sandbox in context["sandboxes"]:
+            sb_name = sandbox["name"]
+            farm = sandbox["farm"]
+            ovs_ssh = self.farm_clients(farm, "ovs-ssh")
+            ovs_ssh.set_sandbox(sb_name, self.install_method,
+                                sandbox["host_container"])
+            ovs_ssh.enable_batch_mode()
+            self._ssh_conns[sb_name] = ovs_ssh
 
     def _get_conn(self, sb_name):
+        self._build_conn_hash(self.context)
         return self._ssh_conns[sb_name]
 
     def _flush_conns(self, cmds=[]):
@@ -99,6 +64,9 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
             ovs_ssh.flush()
 
     def _close_conns(self):
+        if self._ssh_conns is None:
+            return
+
         for _, ovs_ssh in self._ssh_conns.items():
             ovs_ssh.close()
 
