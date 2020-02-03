@@ -108,9 +108,12 @@ class OvnNorthbound(ovn.OvnScenario):
         if create_mgmt_port == False:
             return
 
-        for lswitch in lswitches:
+        for idx, lswitch in enumerate(lswitches):
+            # Try to bind ports in a uniform way across sandboxes.
+            sb_idx = idx % len(sandboxes)
+            sandbox = sandboxes[sb_idx]
             lport = self._create_lports(lswitch, lport_create_args)
-            self._bind_ports(lport, sandboxes, port_bind_args)
+            self._bind_ports(lport, [sandbox], port_bind_args)
 
     @atomic.action_timer("ovn.delete_port_acls")
     def delete_port_acls(self, lswitch, lport, addr_set_index):
