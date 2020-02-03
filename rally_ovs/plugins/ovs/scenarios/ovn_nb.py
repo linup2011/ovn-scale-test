@@ -69,7 +69,7 @@ class OvnNorthbound(ovn.OvnScenario):
                                   "$addrset%d" % addr_set_index)
 
         sandboxes = self.context["sandboxes"]
-        self._bind_ports(lports, sandboxes, port_bind_args)
+        self._bind_ports_and_wait(lports, sandboxes, port_bind_args)
 
     @scenario.configure()
     def create_routed_lport(self, lport_create_args = None,
