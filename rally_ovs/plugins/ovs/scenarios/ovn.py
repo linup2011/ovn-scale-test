@@ -58,6 +58,9 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         return self._ssh_conns[sb_name]
 
     def _flush_conns(self, cmds=[]):
+        if self._ssh_conns is None:
+            return
+
         for _, ovs_ssh in self._ssh_conns.items():
             for cmd in cmds:
                 ovs_ssh.run(cmd)
