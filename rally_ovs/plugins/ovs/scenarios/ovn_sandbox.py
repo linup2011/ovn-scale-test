@@ -88,6 +88,8 @@ class OvnSandbox(sandbox.SandboxScenario):
             key            desc
             ===========    ========
             farm           str, the name of farm node
+            farm-prefix    str, the prefix of farm node names to be used with
+                           iterative runners.
             amount         int, the number of sandbox to be created
             batch          int, the number of sandbox to be created in one session
             start_cidr     str, start value for CIDR used by sandboxes
@@ -96,7 +98,16 @@ class OvnSandbox(sandbox.SandboxScenario):
             ===========    ========
 
         """
-        self._create_sandbox(sandbox_create_args)
+        farm = sandbox_create_args.get("farm", "")
+        if not farm:
+            iteration = self.context["iteration"]
+            farm_prefix = sandbox_create_args.get("farm-prefix", "")
+            farm = "{}{}".format(farm_prefix, iteration)
+            #TODO: hardcoded
+            sandbox_create_args["start_cidr"] = "1.0.{}.{}/8".format(iteration // 256, iteration % 256)
+
+
+        self._create_sandbox(sandbox_create_args, farm)
 
 
     @scenario.configure(context={})
