@@ -107,7 +107,8 @@
                             "ip_offset" : 2
                         },
                         "port_bind_args": {
-                            "internal" : true
+                            "internal" : true,
+                            "wait_up" : true
                         },
                         "create_acls": true
                     },
