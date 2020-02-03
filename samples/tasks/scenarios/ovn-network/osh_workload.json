@@ -1,31 +1,16 @@
 {% set farm_nodes = farm_nodes or 1 %}
 {% set networks = networks or 1 %}
 {% set ports_per_network = ports_per_network or 1 %}
-{% set internal_ports_cleanup = internal_ports_cleanup or 0 %}
 {
     "version": 2,
     "title": "Switch per node workload",
     "subtasks": [
         {
-           "title": "cleanup logical switch",
-           "workloads": [{
-               "name": "OvnNorthbound.cleanup_routed_lswitches",
-               "runner": {"type": "serial","times": 1},
-               "context": {
-                  "sandbox": {"tag": "ToR1"},
-                  "ovn_multihost" : {"controller": "ovn-controller-node"},
-                  "ovn_nb": {}
-               }
-           }]
-        },
-        {% for i in range(0, farm_nodes) %}
-        {
-            "title": "Delete sandbox on farm {{i}}",
+            "title": "Delete sandbox all sandboxes with tag 'ToR1'",
             "workloads": [{
                 "name": "OvnSandbox.delete_sandbox",
                 "args": {
                     "sandbox_delete_args": {
-                        "farm": "ovn-farm-node-{{i}}",
                         "graceful": false,
                         "tag": "ToR1"
                     }
@@ -36,29 +21,37 @@
                 }
             }]
         },
-        {% endfor %}
-        {% for i in range(0, farm_nodes) %}
         {
-            "title": "Create sandbox on farm {{i}}",
+            "title": "Create sandboxes",
             "workloads": [{
                 "name": "OvnSandbox.create_sandbox",
                 "args": {
                     "sandbox_create_args": {
-                        "farm": "ovn-farm-node-{{i}}",
+                        "farm-prefix": "ovn-farm-node-",
                         "amount": 1,
                         "batch" : 1,
-                        "start_cidr": "5.0.{{i // 255 }}.{{i % 255}}/8",
                         "net_dev": "eth1",
                         "tag": "ToR1"
                     }
                 },
-                "runner": {"type": "serial", "times": 1},
+                "runner": {"type": "serial", "times": {{farm_nodes}}},
                 "context": {
                     "ovn_multihost" : {"controller": "ovn-controller-node"}
                 }
             }]
         },
-        {% endfor %}
+        {
+            "title": "cleanup logical switch",
+            "workloads": [{
+                "name": "OvnNorthbound.cleanup_routed_lswitches",
+                "runner": {"type": "serial","times": 1},
+                "context": {
+                   "sandbox": {"tag": "ToR1"},
+                   "ovn_multihost" : {"controller": "ovn-controller-node"},
+                   "ovn_nb": {}
+                }
+            }]
+        },
         {
             "title": "Create switch-per-node scenario (setup workload)",
             "run_in_parallel": true,
@@ -75,7 +68,8 @@
                             "port_security" : true
                         },
                         "port_bind_args": {
-                            "internal" : true
+                            "internal" : true,
+                            "wait_up" : true
                         },
                         "networks_per_router": {{networks}}
                     },
