@@ -15,6 +15,7 @@
 import netaddr
 import random
 import re
+import copy
 
 from rally_ovs.plugins.ovs.scenarios import ovn
 
@@ -97,12 +98,13 @@ class OvnNorthbound(ovn.OvnScenario):
         sandboxes = self.context["sandboxes"]
         iteration = self.context["iteration"]
 
+        lswitch_args = copy.copy(lswitch_create_args)
         start_cidr = lswitch_create_args.get("start_cidr", "")
         if start_cidr:
             start_cidr = netaddr.IPNetwork(start_cidr)
             cidr = start_cidr.next(iteration)
-            lswitch_create_args["start_cidr"] = str(cidr)
-        lswitches = self._create_lswitches(lswitch_create_args)
+            lswitch_args["start_cidr"] = str(cidr)
+        lswitches = self._create_lswitches(lswitch_args)
 
         if networks_per_router:
             self._connect_networks_to_routers(lswitches, lrouters,
