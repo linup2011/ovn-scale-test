@@ -13,9 +13,15 @@
 # under the License.
 
 from rally_ovs.plugins.ovs.scenarios import ovn
+from rally.common import logging
 from rally.task import atomic
 from rally.task import scenario
 import time
+import netaddr
+
+from ovn_nb import OvnNorthbound
+
+LOG = logging.getLogger(__name__)
 
 """Scenario to dynamically add/delete ovn nodes running in containers.
 
@@ -48,6 +54,9 @@ class OvnFakeMultinode(ovn.OvnScenario):
             ovn_fake_path, node_net, node_net_len, node_ip
         )
         ssh_conn.run(cmd)
+
+        #TODO
+        time.sleep(5)
 
     @atomic.action_timer("OvnFakeMultinode.add_chassis_node")
     def _add_chassis(self, ssh_conn, node_net, node_net_len, node_ip, node_name,
@@ -155,3 +164,65 @@ class OvnFakeMultinode(ovn.OvnScenario):
 
         ovn_fake_path = fake_multinode_args.get("cluster_cmd_path")
         self._del_central(ssh, ovn_fake_path)
+
+    @scenario.configure(context={})
+    def add_chassis_nodes(self, fake_multinode_args = {}):
+        iteration = self.context["iteration"]
+        node_prefix = fake_multinode_args.get("node_prefix", "")
+        farm = "{}{}".format(node_prefix, iteration)
+        sb = self._get_sandbox(farm)
+        ssh = self._get_sandbox_conn(sb["name"], sb)
+
+        node_net = fake_multinode_args.get("node_net")
+        node_net_len = fake_multinode_args.get("node_net_len")
+        node_cidr = netaddr.IPNetwork("{}/{}".format(node_net, node_net_len))
+        node_ip = str(node_cidr.ip + iteration + 1)
+        central_ip = fake_multinode_args.get("central_ip")
+        max_timeout_s = fake_multinode_args.get("max_timeout_s")
+
+        ovn_fake_path = fake_multinode_args.get("cluster_cmd_path")
+        node_name = sb["host_container"]
+
+        ovn_sbctl = self.controller_client("ovn-sbctl")
+        ovn_sbctl.set_sandbox("controller-sandbox", self.install_method,
+                              self.context['controller']['host_container'])
+        ovn_sbctl.enable_batch_mode(False)
+
+        self._add_chassis(ssh, node_net, node_net_len, node_ip, node_name,
+                          ovn_fake_path)
+        self._connect_chassis(ssh, node_name, central_ip, ovn_fake_path)
+        self._wait_chassis(ovn_sbctl, node_name, max_timeout_s)
+
+    @scenario.configure(context={})
+    def del_chassis_nodes(self, fake_multinode_args = {}):
+        iteration = self.context["iteration"]
+        node_prefix = fake_multinode_args.get("node_prefix", "")
+        farm = "{}{}".format(node_prefix, iteration)
+        sb = self._get_sandbox(farm)
+        ssh = self._get_sandbox_conn(sb["name"], sb)
+
+        ovn_fake_path = fake_multinode_args.get("cluster_cmd_path")
+        node_name = sb["host_container"]
+
+        self._del_chassis(ssh, node_name, ovn_fake_path)
+
+
+#TODO: move to separate file
+class OvnNorthboundFakeMultinode(OvnFakeMultinode, OvnNorthbound):
+
+    def __init__(self, context):
+        super(OvnNorthboundFakeMultinode, self).__init__(context)
+
+    @scenario.configure(context={})
+    def setup_switch_per_node(self, fake_multinode_args = {},
+                              lswitch_create_args = {},
+                              networks_per_router = {},
+                              lport_create_args = {},
+                              port_bind_args = {},
+                              create_mgmt_port = True):
+        self.add_chassis_nodes(fake_multinode_args)
+        self.create_routed_network(lswitch_create_args=lswitch_create_args,
+                                   networks_per_router=networks_per_router,
+                                   lport_create_args=lport_create_args,
+                                   port_bind_args=port_bind_args,
+                                   create_mgmt_port=create_mgmt_port)
