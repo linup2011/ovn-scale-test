@@ -55,7 +55,7 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
         if start_cidr:
             start_cidr = netaddr.IPNetwork(start_cidr)
 
-        mcast_snoop = lswitch_create_args.get("mcast_snoop", "true")
+        mcast_snoop = lswitch_create_args.get("mcast_snoop", "false")
         mcast_idle = lswitch_create_args.get("mcast_idle_timeout", 300)
         mcast_table_size = lswitch_create_args.get("mcast_table_size", 2048)
 
@@ -130,8 +130,10 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
         base_mac[3:] = ['00']*3
         mac = utils.get_random_mac(base_mac)
 
+        lrouter_port_ip = '{}/{}'.format(netaddr.IPAddress(network["cidr"].last - 1),
+                                         network["cidr"].prefixlen)
         lrouter_port = ovn_nbctl.lrouter_port_add(router["name"], network["name"], mac,
-                                                  str(network["cidr"]))
+                                                  lrouter_port_ip)
         ovn_nbctl.flush()
 
 
