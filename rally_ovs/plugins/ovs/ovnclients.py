@@ -25,11 +25,16 @@ LOG = logging.getLogger(__name__)
 
 
 class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
+    def setup(self):
+        super(OvnClientMixin, self).setup()
+        self._ovn_nbctl_sess = None
+
     def _get_ovn_controller(self, install_method="sandbox"):
-        ovn_nbctl = self.controller_client("ovn-nbctl")
-        ovn_nbctl.set_sandbox("controller-sandbox", install_method,
-                              self.context['controller']['host_container'])
-        return ovn_nbctl
+        if not self._ovn_nbctl_sess:
+            self._ovn_nbctl_sess = self.controller_client("ovn-nbctl")
+            self._ovn_nbctl_sess.set_sandbox("controller-sandbox", install_method,
+                                             self.context['controller']['host_container'])
+        return self._ovn_nbctl_sess
 
     def _start_daemon(self):
         ovn_nbctl = self._get_ovn_controller(self.install_method)
