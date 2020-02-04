@@ -60,7 +60,6 @@
                     "name": "OvnNorthbound.create_routed_network",
                     "args": {
                         "lswitch_create_args": {
-                            "amount" : {{networks}},
                             "start_cidr": "1.0.0.0/16"
                         },
                         "lport_create_args": {
@@ -76,7 +75,7 @@
                     },
                     "runner": {
                         "type": "serial",
-                        "times": 1
+                        "times": {{networks}}
                     },
                     "context": {
                         "ovn_multihost" : {

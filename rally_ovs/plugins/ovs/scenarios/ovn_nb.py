@@ -50,8 +50,6 @@ class OvnNorthbound(ovn.OvnScenario):
     def create_lport_acl_addrset(self, lswitch, lport_create_args, port_bind_args,
                                  ip_start_index = 0, addr_set_index = 0,
                                  create_addr_set = True, create_acls = True):
-        iteration = self.context["iteration"]
-
         lports = self._create_lports(lswitch, lport_create_args,
                                      lport_ip_shift = ip_start_index)
 
@@ -69,7 +67,8 @@ class OvnNorthbound(ovn.OvnScenario):
                                   "$addrset%d" % addr_set_index)
 
         sandboxes = self.context["sandboxes"]
-        self._bind_ports_and_wait(lports, sandboxes, port_bind_args)
+        sandbox = sandboxes[self.context["iteration"] % len(sandboxes)]
+        self._bind_ports_and_wait(lports, [sandbox], port_bind_args)
 
     @scenario.configure()
     def create_routed_lport(self, lport_create_args = None,
@@ -96,10 +95,14 @@ class OvnNorthbound(ovn.OvnScenario):
                               create_mgmt_port = True):
         lrouters = self.context["datapaths"]["routers"]
         sandboxes = self.context["sandboxes"]
+        iteration = self.context["iteration"]
 
-        lswitches = []
-        if lswitch_create_args["amount"]:
-            lswitches = self._create_lswitches(lswitch_create_args)
+        start_cidr = lswitch_create_args.get("start_cidr", "")
+        if start_cidr:
+            start_cidr = netaddr.IPNetwork(start_cidr)
+            cidr = start_cidr.next(iteration)
+            lswitch_create_args["start_cidr"] = str(cidr)
+        lswitches = self._create_lswitches(lswitch_create_args)
 
         if networks_per_router:
             self._connect_networks_to_routers(lswitches, lrouters,
@@ -108,12 +111,9 @@ class OvnNorthbound(ovn.OvnScenario):
         if create_mgmt_port == False:
             return
 
-        for idx, lswitch in enumerate(lswitches):
-            # Try to bind ports in a uniform way across sandboxes.
-            sb_idx = idx % len(sandboxes)
-            sandbox = sandboxes[sb_idx]
-            lport = self._create_lports(lswitch, lport_create_args)
-            self._bind_ports_and_wait(lport, [sandbox], port_bind_args)
+        sandbox = sandboxes[iteration % len(sandboxes)]
+        lport = self._create_lports(lswitches[0], lport_create_args)
+        self._bind_ports_and_wait(lport, [sandbox], port_bind_args)
 
     @atomic.action_timer("ovn.delete_port_acls")
     def delete_port_acls(self, lswitch, lport, addr_set_index):
