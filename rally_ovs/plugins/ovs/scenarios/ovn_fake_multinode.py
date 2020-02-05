@@ -50,7 +50,7 @@ class OvnFakeMultinode(ovn.OvnScenario):
     @atomic.action_timer("OvnFakeMultinode.add_central_node")
     def _add_central(self, ssh_conn, node_net, node_net_len, node_ip,
                      ovn_fake_path):
-        cmd = "cd {} && CHASSIS_COUNT=0 GW_COUNT=0 IP_HOST={} IP_CIDR={} IP_START={} ./ovn_cluster.sh start || true".format(
+        cmd = "sudo bash -c 'cd {} && CHASSIS_COUNT=0 GW_COUNT=0 IP_HOST={} IP_CIDR={} IP_START={} CREATE_FAKE_VMS=no ./ovn_cluster.sh start' || true".format(
             ovn_fake_path, node_net, node_net_len, node_ip
         )
         ssh_conn.run(cmd)
@@ -62,14 +62,14 @@ class OvnFakeMultinode(ovn.OvnScenario):
     def _add_chassis(self, ssh_conn, node_net, node_net_len, node_ip, node_name,
                      ovn_fake_path):
         invalid_remote = "tcp:0.0.0.1:6642"
-        cmd = "cd {} && IP_HOST={} IP_CIDR={} IP_START={} ./ovn_cluster.sh add-chassis {} {} || true".format(
+        cmd = "sudo bash -c 'cd {} && IP_HOST={} IP_CIDR={} IP_START={} ./ovn_cluster.sh add-chassis {} {}' || true".format(
             ovn_fake_path, node_net, node_net_len, node_ip, node_name, invalid_remote
         )
         ssh_conn.run(cmd)
 
     @atomic.action_timer("OvnFakeMultinode.connect_chassis_node")
     def _connect_chassis(self, ssh_conn, node_name, central_ip, ovn_fake_path):
-        cmd = "cd {} && ./ovn_cluster.sh set-chassis-ovn-remote {} tcp:{}:6642 || true".format(
+        cmd = "sudo bash -c 'cd {} && ./ovn_cluster.sh set-chassis-ovn-remote {} tcp:{}:6642 '|| true".format(
             ovn_fake_path, node_name, central_ip
         )
         ssh_conn.run(cmd)
@@ -83,14 +83,14 @@ class OvnFakeMultinode(ovn.OvnScenario):
 
     @atomic.action_timer("OvnFakeMultinode.del_chassis_node")
     def _del_chassis(self, ssh_conn, node_name, ovn_fake_path):
-        cmd = "cd {} && ./ovn_cluster.sh stop-chassis {} || true".format(
+        cmd = "sudo bash -c 'cd {} && OVN_BR_CLEANUP=no ./ovn_cluster.sh stop-chassis {}' || true".format(
             ovn_fake_path, node_name
         )
         ssh_conn.run(cmd)
 
     @atomic.action_timer("OvnFakeMultinode.del_central_node")
     def _del_central(self, ssh_conn, ovn_fake_path):
-        cmd = "cd {} && CHASSIS_COUNT=0 GW_COUNT=0 ./ovn_cluster.sh stop || true".format(
+        cmd = "sudo bash -c 'cd {} && CHASSIS_COUNT=0 GW_COUNT=0 OVN_BR_CLEANUP=no ./ovn_cluster.sh stop' || true".format(
             ovn_fake_path
         )
         ssh_conn.run(cmd)
