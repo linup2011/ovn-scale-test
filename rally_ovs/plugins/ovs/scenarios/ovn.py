@@ -88,7 +88,9 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
                               self.context['controller']['host_container'])
         ovn_nbctl.enable_batch_mode(False)
-        return ovn_nbctl.lswitch_list()
+        lswitches = ovn_nbctl.lswitch_list()
+        ovn_nbctl.close()
+        return lswitches
 
     @atomic.action_timer("ovn.delete_lswitch")
     def _delete_lswitch(self, lswitches):
@@ -101,6 +103,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
             ovn_nbctl.lswitch_del(lswitch["name"])
 
         ovn_nbctl.flush()
+        ovn_nbctl.close()
 
 
     def _get_or_create_lswitch(self, lswitch_create_args=None):
@@ -165,7 +168,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                 flush_count = batch
 
         ovn_nbctl.flush()  # ensure all commands be run
-        ovn_nbctl.enable_batch_mode(False)
+        ovn_nbctl.close()
         return lports
 
 
@@ -180,6 +183,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
             ovn_nbctl.lport_del(lport["name"])
 
         ovn_nbctl.flush()
+        ovn_nbctl.close()
 
 
     @atomic.action_timer("ovn.list_lports")
@@ -192,6 +196,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         for lswitch in lswitches:
             LOG.info("list lports on lswitch %s" % lswitch["name"])
             ovn_nbctl.lport_list(lswitch["name"])
+        ovn_nbctl.close()
 
 
 
@@ -233,6 +238,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                                            'l4_port' : 100 + i }
                 ovn_nbctl.acl_add(sw, direction, priority, match, action)
             ovn_nbctl.flush()
+        ovn_nbctl.close()
 
 
     @atomic.action_timer("ovn.list_acl")
@@ -245,6 +251,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         for lswitch in lswitches:
             LOG.info("list ACLs on lswitch %s" % lswitch["name"])
             ovn_nbctl.acl_list(lswitch["name"])
+        ovn_nbctl.close()
 
 
     @atomic.action_timer("ovn.delete_all_acls")
@@ -256,6 +263,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         for lswitch in lswitches:
             self._delete_acls(lswitch)
         ovn_nbctl.flush()
+        ovn_nbctl.close()
 
     def _delete_acls(self, lswitch, direction=None, priority=None,
                      match=None, flush=False):
@@ -264,8 +272,8 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                               self.context['controller']['host_container'])
         LOG.info("delete ACLs on lswitch %s" % lswitch["name"])
         ovn_nbctl.acl_del(lswitch["name"], direction, priority, match)
-        if flush:
-            ovn_nbctl.flush()
+        ovn_nbctl.flush()
+        ovn_nbctl.close()
 
 
     @atomic.action_timer("ovn_network.create_routers")
@@ -282,6 +290,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl.enable_batch_mode(False)
         for lrouter in ovn_nbctl.lrouter_list():
             ovn_nbctl.lrouter_del(lrouter["name"])
+        ovn_nbctl.close()
 
     @atomic.action_timer("ovn_network.connect_network_to_router")
     def _connect_networks_to_routers(self, lnetworks, lrouters, networks_per_router):
@@ -312,6 +321,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                 flush_count = batch
 
         ovn_nbctl.flush()
+        ovn_nbctl.close()
 
     # NOTE(huikang): num_networks overides the "amount" in network_create_args
     def _create_networks(self, network_create_args, num_networks=-1):
@@ -518,6 +528,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
 
         if wait_sync != "none":
             ovn_nbctl.sync(wait_sync)
+        ovn_nbctl.close()
 
     @atomic.action_timer("ovn_network.list_oflow_count_for_sandboxes")
     def _list_oflow_count_for_sandboxes(self, sandboxes,

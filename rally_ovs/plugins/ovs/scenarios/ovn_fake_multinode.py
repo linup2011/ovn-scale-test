@@ -121,6 +121,7 @@ class OvnFakeMultinode(ovn.OvnScenario):
         ovn_fake_path = fake_multinode_args.get("cluster_cmd_path")
         self._add_chassis(ssh, node_net, node_net_len, node_ip, node_name,
                           ovn_fake_path)
+        ssh.close()
 
     @scenario.configure(context={})
     def connect_chassis_node(self, fake_multinode_args = {}):
@@ -132,6 +133,7 @@ class OvnFakeMultinode(ovn.OvnScenario):
         node_name = sb["host_container"]
         ovn_fake_path = fake_multinode_args.get("cluster_cmd_path")
         self._connect_chassis(ssh, node_name, central_ip, ovn_fake_path)
+        ssh.close()
 
     @scenario.configure(context={})
     def wait_chassis_node(self, fake_multinode_args = {}):
@@ -145,6 +147,7 @@ class OvnFakeMultinode(ovn.OvnScenario):
                               self.context['controller']['host_container'])
         ovn_sbctl.enable_batch_mode(False)
         self._wait_chassis(ovn_sbctl, node_name, max_timeout_s)
+        ovn_sbctl.close()
 
     @scenario.configure(context={})
     def del_chassis_node(self, fake_multinode_args = {}):
@@ -155,6 +158,7 @@ class OvnFakeMultinode(ovn.OvnScenario):
         node_name = sb["host_container"]
         ovn_fake_path = fake_multinode_args.get("cluster_cmd_path")
         self._del_chassis(ssh, node_name, ovn_fake_path)
+        ssh.close()
 
     @scenario.configure(context={})
     def del_central_node(self, fake_multinode_args = {}):
@@ -164,6 +168,7 @@ class OvnFakeMultinode(ovn.OvnScenario):
 
         ovn_fake_path = fake_multinode_args.get("cluster_cmd_path")
         self._del_central(ssh, ovn_fake_path)
+        ssh.close()
 
     @scenario.configure(context={})
     def add_chassis_nodes(self, fake_multinode_args = {}):
@@ -192,6 +197,8 @@ class OvnFakeMultinode(ovn.OvnScenario):
                           ovn_fake_path)
         self._connect_chassis(ssh, node_name, central_ip, ovn_fake_path)
         self._wait_chassis(ovn_sbctl, node_name, max_timeout_s)
+        ssh.close()
+        ovn_sbctl.close()
 
     @scenario.configure(context={})
     def del_chassis_nodes(self, fake_multinode_args = {}):
@@ -205,6 +212,7 @@ class OvnFakeMultinode(ovn.OvnScenario):
         node_name = sb["host_container"]
 
         self._del_chassis(ssh, node_name, ovn_fake_path)
+        ssh.close()
 
 
 #TODO: move to separate file

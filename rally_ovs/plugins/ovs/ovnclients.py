@@ -34,10 +34,12 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
     def _start_daemon(self):
         ovn_nbctl = self._get_ovn_controller(self.install_method)
         ovn_nbctl.start_daemon()
+        ovn_nbctl.close()
 
     def _stop_daemon(self, start = True):
         ovn_nbctl = self._get_ovn_controller(self.install_method)
         ovn_nbctl.stop_daemon()
+        ovn_nbctl.close()
 
     def _create_lswitches(self, lswitch_create_args, num_switches=-1):
         self.RESOURCE_NAME_FORMAT = "lswitch_XXXXXX_XXXXXX"
@@ -89,6 +91,7 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
 
         ovn_nbctl.flush() # ensure all commands be run
         ovn_nbctl.enable_batch_mode(False)
+        ovn_nbctl.close()
         return lswitches
 
     def _create_routers(self, router_create_args):
@@ -151,3 +154,4 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
                 self._connect_network_to_router(lrouter, lnetwork, ovn_nbctl)
 
             lnetworks = lnetworks[networks_per_router:]
+        ovn_nbctl.close()
