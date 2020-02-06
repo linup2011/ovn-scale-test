@@ -525,7 +525,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         success = False
         for i in range(wait_timeout_s * 10):
             try:
-                ovs_ssh.run("ip netns exec {} ping -q -w 1 -c 1 {}".format(lport["name"], lport["gw"]))
+                ovs_ssh.run("ip netns exec {} ping -q -c 1 {}".format(lport["name"], lport["gw"]))
                 ovs_ssh.flush()
                 success = True
                 break
