@@ -183,7 +183,7 @@
                         "times": {{farm_nodes}}
                     },
                     "sla": {
-                        "max_seconds_per_iteration": 20
+                        "max_seconds_per_iteration": 30
                     },
                     "context": {
                         "ovn_multihost": {
@@ -228,7 +228,7 @@
                         "times": {{ports_per_network}}
                     },
                     "sla": {
-                        "max_seconds_per_iteration": 20
+                        "max_seconds_per_iteration": 30
                     },
                     "context": {
                        "sandbox": {"tag": "ToR1"},
