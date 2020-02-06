@@ -564,7 +564,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
             ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
                                   self.context['controller']['host_container'])
             ovn_nbctl.enable_batch_mode(True)
-            self._wait_up_port_lsp(self, lports, ovn_nbctl)
+            self._wait_up_port_lsp(lports, ovn_nbctl)
             if wait_sync != 'none':
                 self._wait_up_port_sync(wait_sync, ovn_nbctl)
             ovn_nbctl.close()
