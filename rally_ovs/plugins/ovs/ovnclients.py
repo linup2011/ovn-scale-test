@@ -29,17 +29,25 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", install_method,
                               self.context['controller']['host_container'])
+        ovn_nbctl.set_daemon_socket(self.context.get("daemon_socket", None))
         return ovn_nbctl
 
     def _start_daemon(self):
         ovn_nbctl = self._get_ovn_controller(self.install_method)
-        ovn_nbctl.start_daemon()
+        ret = ovn_nbctl.start_daemon()
         ovn_nbctl.close()
+        return ret
 
-    def _stop_daemon(self, start = True):
+    def _stop_daemon(self):
         ovn_nbctl = self._get_ovn_controller(self.install_method)
         ovn_nbctl.stop_daemon()
         ovn_nbctl.close()
+
+    def _restart_daemon(self):
+        self._stop_daemon()
+        ret = self._start_daemon()
+        return ret
+
 
     def _create_lswitches(self, lswitch_create_args, num_switches=-1):
         self.RESOURCE_NAME_FORMAT = "lswitch_XXXXXX_XXXXXX"

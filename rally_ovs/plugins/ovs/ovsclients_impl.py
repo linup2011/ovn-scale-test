@@ -38,6 +38,7 @@ class OvnNbctl(OvsClient):
             self.sandbox = None
             self.batch_mode = False
             self.cmds = None
+            self.socket = None
 
         def enable_batch_mode(self, value=True):
             self.batch_mode = bool(value)
@@ -48,61 +49,69 @@ class OvnNbctl(OvsClient):
             self.install_method = install_method
             self.host_container = host_container
 
-        def run(self, cmd, opts=[], args=[], stdout=sys.stdout,
-                stderr=sys.stderr, raise_on_error=True):
-            self.cmds = self.cmds or []
+        def set_daemon_socket(self, socket=None):
+            self.socket = socket
 
-            if self.batch_mode:
-                cmd = itertools.chain([" -- "], opts, [cmd], args)
-                self.cmds.append(" ".join(cmd))
-                return
-
-            if self.sandbox:
-                cmd_prefix = []
-                if self.install_method == "sandbox":
-                    self.cmds.append(". %s/sandbox.rc" % self.sandbox)
-                elif self.install_method == "docker":
-                    cmd_prefix = ["sudo docker exec ovn-north-database"]
-                elif self.install_method == "physical":
-                    if self.host_container:
-                        cmd_prefix = ["sudo docker exec " + self.host_container]
-                    else:
-                        cmd_prefix = ["sudo"]
-
-                if cmd == "exit":
-                    cmd_prefix.append("  ovs-appctl -t ")
-
-                cmd = itertools.chain(cmd_prefix, ["ovn-nbctl"], opts, [cmd], args)
-                self.cmds.append(" ".join(cmd))
-
-            self.ssh.run("\n".join(self.cmds),
-                         stdout=stdout, stderr=stderr, raise_on_error=raise_on_error)
-
+        def run(self, cmd, opts=[], args=[], stdout=sys.stdout,                                                                                                                                                                               
+                stderr=sys.stderr, raise_on_error=True):                                                                                                                                                                                      
+            self.cmds = self.cmds or []                                                                                                                                                                                                       
+                                                                                                                                                                                                                                              
+            if self.batch_mode:                                                                                                                                                                                                               
+                cmd = itertools.chain([" -- "], opts, [cmd], args)                                                                                                                                                                            
+                self.cmds.append(" ".join(cmd))                                                                                                                                                                                               
+                return                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                              
+            if self.sandbox:                                                                                                                                                                                                                  
+                cmd_prefix = []                                                                                                                                                                                                               
+                if self.install_method == "sandbox":                                                                                                                                                                                          
+                    self.cmds.append(". %s/sandbox.rc" % self.sandbox)                                                                                                                                                                        
+                elif self.install_method == "docker":                                                                                                                                                                                         
+                    cmd_prefix = ["sudo docker exec ovn-north-database"]                                                                                                                                                                      
+                elif self.install_method == "physical":                                                                                                                                                                                       
+                    if self.host_container:                                                                                                                                                                                                   
+                        cmd_prefix = ["sudo docker exec " + self.host_container]                                                                                                                                                              
+                    else:                                                                                                                                                                                                                     
+                        cmd_prefix = ["sudo"]                                                                                                                                                                                                 
+                                                                                                                                                                                                                                              
+                if cmd == "exit":                                                                                                                                                                                                             
+                    cmd_prefix.append("  ovs-appctl -t ")                                                                                                                                                                                     
+                                                                                                                                                                                                                                              
+                if self.socket:                                                                                                                                                                                                               
+                    ovn_cmd = "ovn-nbctl -u " + self.socket                                                                                                                                                                                   
+                else:                                                                                                                                                                                                                         
+                    ovn_cmd = "ovn-nbctl"                                                                                                                                                                                                     
+                                                                                                                                                                                                                                              
+                cmd = itertools.chain(cmd_prefix, [ovn_cmd], opts, [cmd], args)                                                                                                                                                               
+                self.cmds.append(" ".join(cmd))                                                                                                                                                                                               
+                                                                                                                                                                                                                                              
+            self.ssh.run("\n".join(self.cmds),                                                                                                                                                                                                
+                         stdout=stdout, stderr=stderr, raise_on_error=raise_on_error)                                                                                                                                                         
+                                                                                                                                                                                                                                              
             self.cmds = None
 
 
-        def flush(self):
-            if self.cmds == None or len(self.cmds) == 0:
-                return
-
-            run_cmds = []
-            if self.sandbox:
-                if self.install_method == "sandbox":
-                    run_cmds.append(". %s/sandbox.rc" % self.sandbox)
-                    run_cmds.append("ovn-nbctl" + " ".join(self.cmds))
-                elif self.install_method == "docker":
-                    run_cmds.append("sudo docker exec ovn-north-database ovn-nbctl " + " ".join(self.cmds))
-                elif self.install_method == "physical":
-                    if self.host_container:
-                        cmd_prefix = "sudo docker exec " + self.host_container + " ovn-nbctl"
-                    else:
-                        cmd_prefix = "sudo ovn-nbctl"
-
-                    run_cmds.append(cmd_prefix + " ".join(self.cmds))
-
-            self.ssh.run("\n".join(run_cmds),
-                         stdout=sys.stdout, stderr=sys.stderr)
-
+        def flush(self):                                                                                                                                                                                                                      
+            if self.cmds == None or len(self.cmds) == 0:                                                                                                                                                                                      
+                return                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                              
+            run_cmds = []                                                                                                                                                                                                                     
+            if self.sandbox:                                                                                                                                                                                                                  
+                if self.install_method == "sandbox":                                                                                                                                                                                          
+                    run_cmds.append(". %s/sandbox.rc" % self.sandbox)                                                                                                                                                                         
+                    run_cmds.append("ovn-nbctl" + " ".join(self.cmds))                                                                                                                                                                        
+                elif self.install_method == "docker":                                                                                                                                                                                         
+                    run_cmds.append("sudo docker exec ovn-north-database ovn-nbctl " + " ".join(self.cmds))                                                                                                                                   
+                elif self.install_method == "physical":                                                                                                                                                                                       
+                    if self.host_container:                                                                                                                                                                                                   
+                        cmd_prefix = "sudo docker exec " + self.host_container + " ovn-nbctl"                                                                                                                                                 
+                    else:                                                                                                                                                                                                                     
+                        cmd_prefix = "sudo ovn-nbctl"                                                                                                                                                                                         
+                                                                                                                                                                                                                                              
+                    run_cmds.append(cmd_prefix + " ".join(self.cmds))                                                                                                                                                                         
+                                                                                                                                                                                                                                              
+            self.ssh.run("\n".join(run_cmds),                                                                                                                                                                                                 
+                         stdout=sys.stdout, stderr=sys.stderr)                                                                                                                                                                                
+                                                                                                                                                                                                                                              
             self.cmds = None
 
 
@@ -281,6 +290,7 @@ class OvnSbctl(OvsClient):
             self.sandbox = None
             self.batch_mode = False
             self.cmds = None
+            self.socket = None
 
         def enable_batch_mode(self, value=True):
             self.batch_mode = bool(value)

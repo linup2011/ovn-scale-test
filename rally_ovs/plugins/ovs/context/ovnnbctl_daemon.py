@@ -40,15 +40,10 @@ class OvnNbctlDaemonContext(ovnclients.OvnClientMixin, context.Context):
     def setup(self):
         super(OvnNbctlDaemonContext, self).setup()
 
-        daemon_mode = self.config["daemon_mode"]
-        if daemon_mode:
-            self._start_daemon()
+        if self.config["daemon_mode"]:
+            self.context["daemon_socket"] = self._restart_daemon()
         else:
             self._stop_daemon()
-
-        self.context["ovn-nbctld"] = {
-            "daemon_mode": daemon_mode,
-        }
 
     @logging.log_task_wrapper(LOG.info, _("Exit context: `ovn-nbctld`"))
     def cleanup(self):
