@@ -534,8 +534,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovs_ssh.close()
 
         if not success:
-            msg = _("Timeout waiting for port %s to be able to ping gateway %s".format(lport["name"], lport["gw"]))
-            raise exceptions.TimeoutException(msg)
+            LOG.info("Timeout waiting for port %s to be able to ping gateway %s".format(lport["name"], lport["gw"]))
 
     @atomic.action_timer("ovn_network.wait_port_lsp_up")
     def _wait_up_port_lsp(self, lports, ovn_nbctl):

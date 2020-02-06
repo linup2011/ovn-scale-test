@@ -182,6 +182,9 @@
                         "type": "serial",
                         "times": {{farm_nodes}}
                     },
+                    "sla": {
+                        "max_seconds_per_iteration": 20
+                    },
                     "context": {
                         "ovn_multihost": {
                             "controller": "ovn-controller-node"
@@ -223,6 +226,9 @@
                     "runner": {
                         "type": "serial",
                         "times": {{ports_per_network}}
+                    },
+                    "sla": {
+                        "max_seconds_per_iteration": 20
                     },
                     "context": {
                        "sandbox": {"tag": "ToR1"},
