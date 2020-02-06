@@ -152,7 +152,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         for i in range(lport_amount):
             ip = str(next(ip_addrs)) if ip_addrs else ""
             if len(ip):
-                name = "lport_%s" % ip
+                name = "lp_%s" % ip
             else:
                 name = self.generate_random_name()
             mac = utils.get_random_mac(base_mac)
@@ -426,7 +426,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovs_ssh.set_sandbox(sb_name, self.install_method, host_container)
 
         for name in list(filter(None, output.splitlines())):
-            if "lport" not in name:
+            if "lp" not in name:
                 continue
             self._delete_ovs_internal_vm(name, ovs_ssh, ovs_vsctl)
 
