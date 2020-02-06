@@ -173,6 +173,7 @@
                         "port_bind_args": {
                             "internal" : true,
                             "wait_up" : true,
+                            "wait_sync" : "ping",
                             "batch" : false
                         },
                         "networks_per_router": {{farm_nodes}}
@@ -214,6 +215,7 @@
                         "port_bind_args": {
                             "internal" : true,
                             "wait_up" : true,
+                            "wait_sync" : "ping",
                             "batch" : false
                         },
                         "create_acls": true
