@@ -138,7 +138,7 @@ class OvnFakeMultinode(ovn.OvnScenario):
     @scenario.configure(context={})
     def wait_chassis_node(self, fake_multinode_args = {}):
         farm = fake_multinode_args.get("farm")
-        max_timeout_s = fake_multinode_args.get("max_timeout_s")
+        max_timeout_s = fake_multinode_args.get("max_timeout_s", 60)
         sb = self._get_sandbox(farm)
         node_name = sb["host_container"]
 
