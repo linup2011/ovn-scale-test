@@ -69,7 +69,7 @@ class OvnNorthbound(ovn.OvnScenario):
         prio 1000: allow inter project traffic
         prio 900: deny all
         """
-        match = "%(direction)s == %(lport)s && ip4.src == %(address_set)s"
+        match = "%(direction)s == \"%(lport)s\" && ip4.src == %(address_set)s"
         acl_create_args = { "match" : match, "address_set" : addr_set }
         self._create_acl(lswitch, lports, acl_create_args, 1,
                          atomic_action = False)
