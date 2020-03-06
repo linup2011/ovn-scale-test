@@ -137,8 +137,10 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
         base_mac[3:] = ['00']*3
         mac = utils.get_random_mac(base_mac)
 
+        lrouter_port_ip = '{}/{}'.format(netaddr.IPAddress(network["cidr"].last - 1),
+                                         network["cidr"].prefixlen)
         lrouter_port = ovn_nbctl.lrouter_port_add(router["name"], network["name"], mac,
-                                                  str(network["cidr"]))
+                                                  lrouter_port_ip)
         ovn_nbctl.flush()
 
 
