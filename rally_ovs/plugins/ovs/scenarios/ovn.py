@@ -267,6 +267,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
                               self.context['controller']['host_container'])
+        ovn_nbctl.set_daemon_socket(self.context.get("daemon_socket", None))
         LOG.info("delete ACLs on lswitch %s" % lswitch["name"])
         ovn_nbctl.acl_del(lswitch["name"], direction, priority, match)
         if flush:
@@ -576,6 +577,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
                               self.context['controller']['host_container'])
+        ovn_nbctl.set_daemon_socket(self.context.get("daemon_socket", None))
         ovn_nbctl.create("Address_Set", name, ('addresses', addr_list))
         ovn_nbctl.flush()
 
@@ -588,6 +590,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
                               self.context['controller']['host_container'])
+        ovn_nbctl.set_daemon_socket(self.context.get("daemon_socket", None))
         ovn_nbctl.add("Address_Set", name, ('addresses', ' ', addr_list))
         ovn_nbctl.flush()
 
@@ -600,6 +603,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
                               self.context['controller']['host_container'])
+        ovn_nbctl.set_daemon_socket(self.context.get("daemon_socket", None))
         ovn_nbctl.remove("Address_Set", name, ('addresses', ' ', addr_list))
         ovn_nbctl.flush()
 
@@ -620,6 +624,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox", self.install_method,
                               self.context['controller']['host_container'])
+        ovn_nbctl.set_daemon_socket(self.context.get("daemon_socket", None))
         ovn_nbctl.destroy("Address_Set", set_name)
         ovn_nbctl.flush()
 
