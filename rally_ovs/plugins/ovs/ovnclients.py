@@ -166,6 +166,7 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
 
     def _connect_gateway_router(self, router, network, gw_cidr, ext_cidr, sandbox):
         ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.enable_batch_mode()
 
         base_mac = [i[:2] for i in self.task["uuid"].split('-')]
         base_mac[0] = str(hex(int(base_mac[0], 16) & 254))
@@ -237,6 +238,8 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
         gw_router['gw'] = gr_gw
         gw_router['rp_gw'] = rp_gw
 
+        ovn_nbctl.flush()
+        ovn_nbctl.enable_batch_mode(False)
         return network, router, join_switch, gw_router, ext_switch
 
     def _connect_networks_to_gw_routers(self, lnetworks, lrouters, sandboxes,
@@ -273,6 +276,7 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
             return
 
         ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.enable_batch_mode()
         for network, router, join_switch, gw_router, ext_switch in dps:
 
             router_name = router['name']
@@ -298,3 +302,5 @@ class OvnClientMixin(ovsclients.ClientsMixin, RandomNameGeneratorMixin):
             # SNAT traffic leaving the cluster.
             ovn_nbctl.lrouter_nat_add(gw_router_name, "snat",
                                       str(gw_router['gw']), cluster_cidr)
+            ovn_nbctl.flush()
+        ovn_nbctl.enable_batch_mode(False)
